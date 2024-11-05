@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>משחק התאמת מילים למספר האותיות במילה</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+    }
+
+    .game-header, .start-screen {
+      text-align: center;
+    }
+
+    .start-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .start-screen input {
+      padding: 10px 20px;
+      font-size: 18px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      text-align: right;
+    }
+
+    .start-screen button {
+      padding: 10px 20px;
+      font-size: 18px;
+      border-radius: 5px;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .start-screen button:hover {
+      background-color: #45a049;
+    }
+
+    .game-container {
+      display: none;
+    }
+
+    .level-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .word-container, .letter-count-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 15px;
+    }
+
+    .word {
+      background-color: #2196F3;
+      color: white;
+      padding: 15px 30px;
+      font-size: 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .letter-count {
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 25px;
+      font-size: 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease, background-color 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .letter-count:hover {
+      transform: translateY(-2px);
+      background-color: #45a049;
+    }
+
+    .score-container {
+      text-align: center;
+      font-size: 20px;
+      margin: 20px 0;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
+    }
+
+    .game-progress {
+      text-align: center;
+      color: #666;
+      margin-top: 20px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="start-screen fade-in">
+      <h1>ברוך הבא למשחק התאמת מילים למספר האותיות במילה</h1>
+      <input type="text" placeholder="הזן את שמך" id="player-name">
+      <button onclick="startGame()">התחל משחק</button>
+    </div>
+
+    <div class="game-container">
+      <div class="game-header">
+        <h1>משחק התאמת מילים למספר האותיות במילה</h1>
+      </div>
+
+      <div class="game-level">
+        <div class="level-title">שלב 1</div>
+        <div class="word-container">
+          <div class="word">בית</div>
+        </div>
+        <div class="letter-count-container">
+          <div class="letter-count">10</div>
+          <div class="letter-count">7</div>
+          <div class="letter-count">3</div>
+          <div class="letter-count">1</div>
+        </div>
+        <div class="score-container">ניקוד: 0</div>
+        <div class="game-progress"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let score = 0;
+    const wordContainer = document.querySelector(".word-container .word");
+    const letterCountContainers = document.querySelectorAll(".letter-count-container .letter-count");
+    const scoreContainer = document.querySelector(".score-container");
+    const playerNameInput = document.getElementById("player-name");
+    const gameProgress = document.querySelector(".game-progress");
+    let currentLevel = 1;
+    let playerName = "";
+    const levels = [
+      { word: "בית", letterCounts: [10, 7, 3, 1] },
+      { word: "מספריים", letterCounts: [8, 7, 5, 3] },
+      { word: "מלפפון", letterCounts: [6, 5, 4, 3] },
+      { word: "ספר", letterCounts: [5, 4, 3, 2] },
+      { word: "שולחן", letterCounts: [7, 6, 5, 4] }
+    ];
+
+    function startGame() {
+      playerName = playerNameInput.value.trim();
+      if (playerName === "") {
+        alert("אנא הזן את שמך כדי להתחיל במשחק.");
+        return;
+      }
+
+      document.querySelector(".start-screen").style.display = "none";
+      document.querySelector(".game-container").style.display = "block";
+      document.querySelector(".game-container").classList.add("fade-in");
+      updateProgress();
+      loadNextLevel();
+    }
+
+    letterCountContainers.forEach((letterCountContainer) => {
+      letterCountContainer.addEventListener("click", () => {
+        const letterCount = parseInt(letterCountContainer.textContent);
+        const wordLength = wordContainer.textContent.length;
+
+        if (letterCount === wordLength) {
+          score++;
+          updateScore();
+          showSuccessMessage();
+          setTimeout(loadNextLevel, 1000);
+        } else {
+          showErrorMessage();
+        }
+      });
+    });
+
+    function showSuccessMessage() {
+      const message = document.createElement("div");
+      message.textContent = `${playerName}, מצוין!`;
+      message.style.position = "fixed";
+      message.style.top = "50%";
+      message.style.left = "50%";
+      message.style.transform = "translate(-50%, -50%)";
+      message.style.background = "#4CAF50";
+      message.style.color = "white";
+      message.style.padding = "20px";
+      message.style.borderRadius = "10px";
+      message.style.zIndex = "1000";
+      document.body.appendChild(message);
+      setTimeout(() => message.remove(), 1000);
+    }
+
+    function showErrorMessage() {
+      const message = document.createElement("div");
+      message.textContent = `${playerName}, נסה שוב!`;
+      message.style.position = "fixed";
+      message.style.top = "50%";
+      message.style.left = "50%";
+      message.style.transform = "translate(-50%, -50%)";
+      message.style.background = "#f44336";
+      message.style.color = "white";
+      message.style.padding = "20px";
+      message.style.borderRadius = "10px";
+      message.style.zIndex = "1000";
+      document.body.appendChild(message);
+      setTimeout(() => message.remove(), 1000);
+    }
+
+    function loadNextLevel() {
+      if (currentLevel > levels.length) {
+        showGameOverMessage();
+        return;
+      }
+
+      const currentLevelData = levels[currentLevel - 1];
+      document.querySelector(".level-title").textContent = `שלב ${currentLevel}`;
+      wordContainer.textContent = currentLevelData.word;
+      letterCountContainers.forEach((letterCountContainer, index) => {
+        letterCountContainer.textContent = currentLevelData.letterCounts[index].toString();
+      });
+      updateProgress();
+      currentLevel++;
+    }
+
+    function showGameOverMessage() {
+      const container = document.querySelector(".game-container");
+      container.innerHTML = `
+        <div class="game-header fade-in">
+          <h1>כל הכבוד!</h1>
+          <p>${playerName}, סיימת את המשחק עם ${score} נקודות.</p>
+          <button onclick="location.reload()" style="
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 5px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            margin-top: 20px;
+          ">שחק שוב</button>
+        </div>
+      `;
+    }
+
+    function updateScore() {
+      scoreContainer.textContent = `ניקוד: ${score}`;
+    }
+
+    function updateProgress() {
+      gameProgress.textContent = `שלב ${currentLevel} מתוך ${levels.length}`;
+    }
+  </script>
+</body>
+</html>
